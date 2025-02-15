@@ -1,0 +1,23 @@
+[package]
+name = "pub_salesman"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "pub_salesman"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pub_salesman"
+path = "src/main.rs"
+
+[dependencies]
+csv = "1.3.1"
+serde = { version = "1.0", features = ["derive"] }
+geo-types = "0.7.12"
+shapefile = "0.5.0"
+regex = "1.10.3"
+clap = { version = "4.5.28", features = ["derive"] }
+geo = "0.29.3"
+proj = "0.28.0"
+plotters = "0.3.7"
