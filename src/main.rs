@@ -1,11 +1,10 @@
 use clap::Parser;
 use geo::prelude::Contains;
-use geo_types::Point;
-use proj::Proj;
 use pub_salesman::boroughs::read_borough_file;
 use pub_salesman::links::read_road_files;
-use pub_salesman::model::{BoroughGeometry, BoroughNetwork, NetworkNode, NetworkNodeType, Pub};
-use pub_salesman::plot::plot_borough_data;
+use pub_salesman::network_model::{BoroughGeometry, BoroughNetwork, NetworkNode, NetworkNodeType};
+use pub_salesman::pub_model::Pub;
+// use pub_salesman::plot::plot_borough_data;
 
 #[derive(Parser)]
 #[command(name = "Borough Finder")]
@@ -21,27 +20,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let borough = read_borough_file(&args.borough_name)?;
 
     println!("Borough found: {:?}", borough.name);
-    let to_borough_crs = Proj::new_known_crs("EPSG:4326", "EPSG:27700", None)?;
 
     let mut pubs_file = csv::Reader::from_path("./raw_data/pubs/Pubs.csv")?;
 
     let filtered_pubs: Vec<Pub> = pubs_file
-        .deserialize()
-        .filter_map(|result| result.ok())
-        .filter_map(|mut pub_data: Pub| {
-            if let Ok((x, y)) = to_borough_crs.convert((pub_data.longitude, pub_data.latitude)) {
-                let pub_location = Point::new(x, y);
-                if match &borough.geometry {
-                    BoroughGeometry::Single(polygon) => polygon.contains(&pub_location),
-                    BoroughGeometry::Multi(multi_polygon) => multi_polygon.contains(&pub_location),
-                } {
-                    pub_data.add_geometry(x, y);
+        .deserialize::<Pub>()
+        .filter_map(Result::ok)
+        .filter_map(|pub_data| match &borough.geometry {
+            BoroughGeometry::Single(polygon) => {
+                if polygon.contains(&pub_data.geometry) {
                     Some(pub_data)
                 } else {
                     None
                 }
-            } else {
-                None
+            }
+            BoroughGeometry::Multi(multi_polygon) => {
+                if multi_polygon.contains(&pub_data.geometry) {
+                    Some(pub_data)
+                } else {
+                    None
+                }
             }
         })
         .collect();
@@ -58,18 +56,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     for pub_item in &filtered_pubs {
-        if let Some(pub_point) = pub_item.geometry {
-            let node = NetworkNode::new(pub_item.name.clone(), NetworkNodeType::Pub, pub_point);
-            borough_network.add_node(node);
-        }
+        let node = NetworkNode::new(
+            pub_item.name.clone(),
+            NetworkNodeType::Pub,
+            pub_item.geometry,
+        );
+        borough_network.add_node(node);
     }
 
-    plot_borough_data(
-        &borough_network.borough,
-        &filtered_pubs,
-        &borough_network,
-        "borough_visualization.png",
-    )?;
+    // plot_borough_data(
+    //     &borough_network.borough,
+    //     &filtered_pubs,
+    //     &borough_network,
+    //     "borough_visualization.png",
+    // )?;
 
     Ok(())
 }

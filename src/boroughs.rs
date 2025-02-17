@@ -1,4 +1,4 @@
-use crate::model::{Borough, BoroughGeometry};
+use crate::network_model::{Borough, BoroughGeometry};
 use geo_types::{Coord, LineString, MultiPolygon, Polygon};
 use shapefile::Shape;
 

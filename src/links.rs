@@ -1,4 +1,4 @@
-use crate::model::{
+use crate::network_model::{
     Borough, BoroughGeometry, BoroughNetwork, NetworkLink, NetworkLinkType, NetworkNode,
     NetworkNodeType,
 };
@@ -24,11 +24,10 @@ pub fn read_road_files(borough: Borough) -> Result<BoroughNetwork, Box<dyn std::
         let links_records = links_reader.iter_shapes_and_records();
         let nodes_records = nodes_reader.iter_shapes_and_records();
 
-        for record in links_records {
-            if let Ok((shape, record)) = record {
-                if let Some(network_link) = generate_network_link(record, shape, &network.borough) {
-                    network.add_link(network_link);
-                }
+        for record in links_records.flatten() {
+            if let Some(network_link) = generate_network_link(record.1, record.0, &network.borough)
+            {
+                network.add_link(network_link);
             }
         }
 
@@ -38,11 +37,9 @@ pub fn read_road_files(borough: Borough) -> Result<BoroughNetwork, Box<dyn std::
             .flat_map(|link| link.connected_nodes.iter().cloned())
             .collect();
 
-        for record in nodes_records {
-            if let Ok((shape, record)) = record {
-                if let Some(network_node) = generate_network_node(record, shape, &link_ids) {
-                    network.add_node(network_node);
-                }
+        for record in nodes_records.flatten() {
+            if let Some(network_node) = generate_network_node(record.1, record.0, &link_ids) {
+                network.add_node(network_node);
             }
         }
     }

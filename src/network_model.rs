@@ -1,42 +1,5 @@
 use geo_types::{LineString, MultiPolygon, Point, Polygon};
-use serde::Deserialize;
 use std::collections::HashSet;
-
-#[derive(Debug, Deserialize)]
-pub struct Pub {
-    pub name: String,
-    pub latitude: f64,
-    pub longitude: f64,
-    address1: String,
-    borough_name: String,
-    #[serde(skip)]
-    pub geometry: Option<Point<f64>>,
-}
-
-impl Pub {
-    pub fn full_address(&self) -> String {
-        format!("{}, {}", self.address1, self.borough_name)
-    }
-
-    pub fn add_geometry(&mut self, x: f64, y: f64) {
-        self.geometry = Some(Point::new(x, y));
-    }
-}
-
-#[derive(Debug)]
-pub struct RoadNode {
-    pub id: String,
-    pub geometry: Point<f64>,
-}
-
-#[derive(Debug)]
-pub struct RoadLink {
-    pub id: String,
-    pub name: Option<String>,
-    pub length: f64,
-    pub connected_nodes: HashSet<String>,
-    pub geometry: LineString<f64>,
-}
 
 #[derive(Debug)]
 pub enum BoroughGeometry {
